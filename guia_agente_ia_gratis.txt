@@ -1,0 +1,130 @@
+================================================================================
+GUÍA COMPLETA DESDE CERO: CREACIÓN DE UN AGENTE DE IA LOCAL Y GRATUITO
+================================================================================
+
+Este documento contiene todos los pasos, explicaciones y el código necesario
+para construir, configurar y ejecutar tu propio agente de respuestas automatizadas 
+en tu computadora sin pagar nada, usando herramientas 100% de código abierto.
+
+--------------------------------------------------------------------------------
+ÍNDICE DE CONTENIDOS
+--------------------------------------------------------------------------------
+1. Requisitos y Herramientas (La Pila Tecnológica)
+2. Paso 1: Instalación del Cerebro de IA (Ollama)
+3. Paso 2: Configuración del Entorno de Programación
+4. Paso 3: Código Fuente del Agente (agent.py)
+5. Paso 4: Cómo Ejecutar el Agente
+6. Siguientes Pasos: Conectarlo al Mundo Real
+
+================================================================================
+1. REQUISITOS Y HERRAMIENTAS (LA PILA TECNOLÓGICA)
+================================================================================
+Para que este sistema sea 100% gratuito y no dependa de APIs pagas (como OpenAI),
+ejecutaremos todo de forma local en tu computadora:
+
+* Python: El lenguaje de programación que unirá todo.
+* Ollama: Una herramienta gratuita que te permite descargar y ejecutar Modelos
+  de Lenguaje (LLMs) como Llama 3 o Mistral directamente en tu hardware.
+* CrewAI: Un framework de código abierto en Python diseñado para estructurar 
+  agentes de IA, dándoles roles, metas y tareas específicas.
+
+================================================================================
+2. PASO 1: INSTALACIÓN DEL CEREBRO DE IA (OLLAMA)
+================================================================================
+1. Descarga e instala Ollama desde su sitio web oficial: https://ollama.com
+2. Abre la Terminal (Mac/Linux) o el Símbolo del Sistema / CMD (Windows).
+3. Descarga y ejecuta el modelo Llama 3 escribiendo el siguiente comando:
+   
+   ollama run llama3
+
+4. Espera a que finalice la descarga. Una vez completada, verás un prompt para
+   chatear con la IA. Escribe "/bye" y presiona Enter para salir del chat (pero
+   asegúrate de dejar la aplicación Ollama ejecutándose en segundo plano).
+
+================================================================================
+3. PASO 2: CONFIGURACIÓN DEL ENTORNO DE PROGRAMACIÓN
+================================================================================
+Abre tu terminal o consola de comandos y ejecuta las siguientes instrucciones
+para crear una carpeta de proyecto limpia e instalar las librerías necesarias:
+
+# 1. Crea la carpeta del proyecto y entra en ella
+mkdir agente-ia-gratis
+cd agente-ia-gratis
+
+# 2. Instala la librería CrewAI mediante pip
+pip install crewai
+
+================================================================================
+4. PASO 3: CÓDIGO FUENTE DEL AGENTE (agent.py)
+================================================================================
+Crea un archivo de texto dentro de la carpeta "agente-ia-gratis", nómbralo
+exactamente "agent.py" y pégale el siguiente código completo:
+
+---------------------------------- COPIAR DESDE AQUÍ ----------------------------------
+from crewai import Agent, Task, Crew, LLM
+
+# 1. Conexión con el cerebro de IA local corriendo en Ollama
+local_llm = LLM(
+    model="ollama/llama3",
+    base_url="http://localhost:11434"
+)
+
+# 2. Definición del Agente: Su rol, su meta y su personalidad
+agente_soporte = Agent(
+    role="Especialista Senior en Soporte al Cliente",
+    goal="Proporcionar respuestas serviciales, amables y muy concisas a las consultas de los usuarios.",
+    backstory="Eres un agente de soporte empático que trabaja en una empresa tecnológica. Siempre mantienes tus respuestas breves, claras y profesionales.",
+    llm=local_llm,
+    verbose=True
+)
+
+# 3. Simulación de un mensaje entrante (Aquí es donde llegará el texto de tus usuarios)
+mensaje_entrante = "Hola, intenté iniciar sesión hoy pero dice que mi contraseña expiró. ¿Me pueden ayudar?"
+
+# 4. Asignación de la tarea que debe realizar el agente
+tarea_responder = Task(
+    description=f"Analiza el siguiente mensaje del cliente: '{mensaje_entrante}'. Redacta una respuesta empática, profesional y que resuelva su problema de forma directa.",
+    expected_output="Una respuesta corta y profesional lista para ser enviada por correo o chat al usuario.",
+    agent=agente_soporte
+)
+
+# 5. Configuración del equipo de trabajo (Crew) y ejecución
+equipo_soporte = Crew(
+    agents=[agente_soporte],
+    tasks=[tarea_responder]
+)
+
+print("\n--- EL AGENTE ESTÁ PENSANDO ---")
+resultado = equipo_soporte.kickoff()
+
+print("\n--- RESPUESTA FINAL GENERADA POR EL AGENTE ---")
+print(resultado)
+---------------------------------- TERMINA AQUÍ ----------------------------------
+
+================================================================================
+5. PASO 4: CÓMO EJECUTAR EL AGENTE
+================================================================================
+Una vez guardado el archivo `agent.py`, vuelve a tu terminal (asegurándote de estar
+dentro de la carpeta del proyecto) y ejecuta:
+
+python agent.py
+
+Verás cómo tu computadora empieza a procesar la información de manera interna. Al
+cabo de unos segundos, el script imprimirá en pantalla una respuesta perfectamente
+redactada para el cliente, generada de forma local y 100% gratuita.
+
+================================================================================
+6. SIGUIENTES PASOS: CONECTARLO AL MUNDO REAL
+================================================================================
+Para convertir este script en un bot real que responda mensajes automáticamente,
+puedes integrar librerías adicionales de Python según la plataforma que uses:
+
+* Para Correo Electrónico (Gmail/Outlook): Utiliza las librerías nativas `imaplib`
+  (para leer correos entrantes nuevos) y `smtplib` (para enviar las respuestas).
+* Para Telegram: Instala la librería `python-telegram-bot` (`pip install python-telegram-bot`)
+  para escuchar los mensajes de un canal y responder instantáneamente.
+* Para Discord: Utiliza `discord.py` para automatizar las interacciones en tu servidor.
+
+================================================================================
+¡Listo! Tienes en tus manos los cimientos de un sistema de atención automatizado.
+================================================================================
