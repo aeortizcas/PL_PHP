@@ -21,6 +21,9 @@
                     <x-nav-link :href="route('call-logs.index')" :active="request()->routeIs('call-logs.*')">
                         {{ __('Call Log') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('emails.index')" :active="request()->routeIs('emails.*')">
+                        {{ __('Emails') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -81,6 +84,9 @@
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('call-logs.index')" :active="request()->routeIs('call-logs.*')">
                         {{ __('Call Log') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('emails.index')" :active="request()->routeIs('emails.*')">
+                        {{ __('Emails') }}
                     </x-responsive-nav-link>
                 </div>
 
