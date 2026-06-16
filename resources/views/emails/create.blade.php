@@ -19,12 +19,15 @@
                     <form action="{{ route('emails.store') }}" method="POST">
                         @csrf
 
+                        <input type="hidden" name="reply_to_email_id" value="{{ request('reply_to_email_id') }}">
+                        <input type="hidden" name="ai_suggestion" value="{{ request('ai_suggestion') }}">
+
                         <div class="mb-4">
                             <label for="to" class="block text-sm font-medium text-gray-700 mb-1">To</label>
                             <input type="email" name="to" id="to"
                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                    placeholder="recipient@example.com"
-                                   value="{{ old('to') }}" required>
+                                    value="{{ old('to', request('to')) }}" required>
                             @error('to')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -35,7 +38,7 @@
                             <input type="text" name="subject" id="subject"
                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                    placeholder="Email subject"
-                                   value="{{ old('subject') }}" required>
+                                    value="{{ old('subject', request('subject')) }}" required>
                             @error('subject')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -45,7 +48,7 @@
                             <label for="body" class="block text-sm font-medium text-gray-700 mb-1">Message</label>
                             <textarea name="body" id="body" rows="12"
                                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                      placeholder="Write your message..." required>{{ old('body') }}</textarea>
+                                                                             placeholder="Write your message..." required>{{ old('body', request('body')) }}</textarea>
                             @error('body')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror

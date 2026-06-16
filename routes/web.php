@@ -26,7 +26,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/create', [EmailController::class, 'create'])->name('create');
         Route::post('/', [EmailController::class, 'store'])->name('store');
         Route::post('/sync', [EmailController::class, 'sync'])->name('sync');
+        Route::get('/preferences', [EmailController::class, 'preferences'])->name('preferences');
+        Route::post('/preferences', [EmailController::class, 'updatePreferences'])->name('preferences.update');
         Route::get('/{email}', [EmailController::class, 'show'])->name('show');
+        Route::post('/{email}/suggest-reply', [EmailController::class, 'suggestReply'])->name('suggest-reply');
         Route::delete('/{email}', [EmailController::class, 'destroy'])->name('destroy');
     });
 });

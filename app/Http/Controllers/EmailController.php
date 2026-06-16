@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Email;
+use App\Models\EmailReplyHistory;
+use App\Models\EmailReplyPreference;
+use App\Services\AIService;
 use App\Services\GmailService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -74,6 +78,8 @@ class EmailController extends Controller
             'to' => ['required', 'email', 'max:255'],
             'subject' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string'],
+            'reply_to_email_id' => ['nullable', 'exists:emails,id'],
+            'ai_suggestion' => ['nullable', 'string'],
         ]);
 
         $sent = $this->gmail->sendEmail(
@@ -84,7 +90,7 @@ class EmailController extends Controller
         );
 
         if (!$sent) {
-            Email::create([
+            $email = Email::create([
                 'user_id' => Auth::id(),
                 'subject' => $validated['subject'],
                 'body_plain' => $validated['body'],
@@ -98,8 +104,69 @@ class EmailController extends Controller
                 ->with('status_type', 'warning');
         }
 
+        if ($validated['reply_to_email_id']) {
+            $original = Email::find($validated['reply_to_email_id']);
+            if ($original && $original->user_id === Auth::id()) {
+                $aiSuggestion = $validated['ai_suggestion'] ?? null;
+                $wasEdited = $aiSuggestion && $aiSuggestion !== $validated['body'];
+
+                EmailReplyHistory::create([
+                    'user_id' => Auth::id(),
+                    'email_id' => $original->id,
+                    'original_subject' => $original->subject,
+                    'original_body' => $original->body_plain ?? $original->body_html ?? '',
+                    'reply_body' => $validated['body'],
+                    'ai_suggestion' => $aiSuggestion,
+                    'was_edited' => $wasEdited,
+                ]);
+            }
+        }
+
         return to_route('emails.index')
             ->with('status', 'Email sent successfully.')
+            ->with('status_type', 'success');
+    }
+
+    public function preferences(): View
+    {
+        $prefs = EmailReplyPreference::firstOrCreate(
+            ['user_id' => Auth::id()],
+            [
+                'tone' => 'professional',
+                'language' => 'auto',
+                'include_signature' => true,
+                'learn_from_replies' => true,
+            ]
+        );
+
+        return view('emails.preferences', compact('prefs'));
+    }
+
+    public function updatePreferences(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'tone' => ['required', 'string', 'in:professional,friendly,formal,concise,detailed'],
+            'language' => ['required', 'string', 'in:auto,en,es,fr,pt'],
+            'signature' => ['nullable', 'string', 'max:500'],
+            'style_notes' => ['nullable', 'string', 'max:1000'],
+            'include_signature' => ['boolean'],
+            'learn_from_replies' => ['boolean'],
+        ]);
+
+        EmailReplyPreference::updateOrCreate(
+            ['user_id' => Auth::id()],
+            [
+                'tone' => $validated['tone'],
+                'language' => $validated['language'],
+                'signature' => $validated['signature'],
+                'style_notes' => $validated['style_notes'],
+                'include_signature' => $request->boolean('include_signature'),
+                'learn_from_replies' => $request->boolean('learn_from_replies'),
+            ]
+        );
+
+        return to_route('emails.preferences')
+            ->with('status', 'Preferences saved.')
             ->with('status_type', 'success');
     }
 
@@ -110,6 +177,45 @@ class EmailController extends Controller
         return to_route('emails.index')
             ->with('status', "Synced {$count} emails.")
             ->with('status_type', 'success');
+    }
+
+    public function suggestReply(Email $email, AIService $ai): JsonResponse
+    {
+        if ($email->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $raw = $ai->suggestEmailReply(
+            subject: $email->subject,
+            fromName: $email->from_name ?: $email->from_email,
+            body: $email->body_plain ?? $email->body_html ?? '',
+            userId: Auth::id(),
+            fromEmail: $email->from_email,
+        );
+
+        if (!$raw) {
+            return response()->json([
+                'success' => false,
+                'message' => 'AI service is not available. Make sure Ollama is running.',
+            ], 503);
+        }
+
+        $analysis = '';
+        $suggestion = $raw;
+
+        if (preg_match('/ANÁLISIS:\s*(.*?)(?=\nRESPUESTA:)/s', $raw, $m)) {
+            $analysis = trim($m[1]);
+        }
+        if (preg_match('/RESPUESTA:\s*(.*)$/s', $raw, $m)) {
+            $suggestion = trim($m[1]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'analysis' => $analysis,
+            'suggestion' => $suggestion,
+            'raw' => $raw,
+        ]);
     }
 
     public function destroy(Email $email): RedirectResponse
