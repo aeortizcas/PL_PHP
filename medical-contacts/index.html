@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Contacts</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://sql.js.org/dist/sql-wasm.js"></script>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <h1>Medical Contacts</h1>
+            <nav class="nav-tabs">
+                <button class="nav-btn active" data-tab="doctors">Doctors</button>
+                <button class="nav-btn" data-tab="facilities">Facilities</button>
+            </nav>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search doctors...">
+            </div>
+            <div class="doctor-list" id="doctorList"></div>
+            <div class="sidebar-footer">
+                <button id="downloadDbBtn" class="btn btn-small" title="Download database">&#8595; DB</button>
+                <button id="uploadDbBtn" class="btn btn-small" title="Upload database">&#8593; DB</button>
+                <input type="file" id="dbFileInput" accept=".sqlite,.db" hidden>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div id="doctorsTab" class="tab-content active">
+                <div class="detail-view" id="doctorDetail">
+                    <div class="empty-state">Select or create a doctor</div>
+                </div>
+                <button class="fab" id="addDoctorBtn" title="Add Doctor">+</button>
+            </div>
+
+            <div id="facilitiesTab" class="tab-content">
+                <div class="facilities-manager">
+                    <div class="facilities-header">
+                        <h2>Facilities</h2>
+                        <button id="addFacilityBtn" class="btn btn-primary">+ Add Facility</button>
+                    </div>
+                    <div class="facilities-list" id="facilitiesList"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="doctorModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="doctorModalTitle">New Doctor</h2>
+                <button class="modal-close" id="doctorModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editDoctorId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name *</label>
+                        <input type="text" id="doctorFirstName">
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name *</label>
+                        <input type="text" id="doctorLastName">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="doctorPhone">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="doctorEmail">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Fax</label>
+                    <input type="text" id="doctorFax">
+                </div>
+                <div class="form-group">
+                    <label>Facilities & Body Parts</label>
+                    <div id="doctorFacilitiesContainer"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="doctorModalCancel">Cancel</button>
+                <button class="btn btn-primary" id="doctorModalSave">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="facilityModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2 id="facilityModalTitle">Facility</h2>
+                <button class="modal-close" id="facilityModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editFacilityId">
+                <div class="form-group">
+                    <label>Facility Name *</label>
+                    <input type="text" id="facilityName">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <textarea id="facilityAddress" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary danger" id="facilityDeleteBtn">Delete</button>
+                <button class="btn btn-secondary" id="facilityModalCancel">Cancel</button>
+                <button class="btn btn-primary" id="facilityModalSave">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
