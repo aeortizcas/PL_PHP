@@ -21,8 +21,11 @@
                     <x-nav-link :href="route('call-logs.index')" :active="request()->routeIs('call-logs.*')">
                         {{ __('Call Log') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('emails.index')" :active="request()->routeIs('emails.*')">
+                    <x-nav-link :href="route('emails.index')" :active="request()->routeIs('emails.index') || request()->routeIs('emails.show') || request()->routeIs('emails.create') || request()->routeIs('emails.sent')">
                         {{ __('Emails') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('emails.triage')" :active="request()->routeIs('emails.triage')">
+                        {{ __('Triage') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -85,8 +88,11 @@
                     <x-responsive-nav-link :href="route('call-logs.index')" :active="request()->routeIs('call-logs.*')">
                         {{ __('Call Log') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('emails.index')" :active="request()->routeIs('emails.*')">
+                    <x-responsive-nav-link :href="route('emails.index')" :active="request()->routeIs('emails.index') || request()->routeIs('emails.show') || request()->routeIs('emails.create') || request()->routeIs('emails.sent')">
                         {{ __('Emails') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('emails.triage')" :active="request()->routeIs('emails.triage')">
+                        {{ __('Triage') }}
                     </x-responsive-nav-link>
                 </div>
 

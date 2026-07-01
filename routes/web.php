@@ -28,6 +28,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/sync', [EmailController::class, 'sync'])->name('sync');
         Route::get('/preferences', [EmailController::class, 'preferences'])->name('preferences');
         Route::post('/preferences', [EmailController::class, 'updatePreferences'])->name('preferences.update');
+        Route::get('/triage', [EmailController::class, 'triage'])->name('triage');
+        Route::post('/triage/run', [EmailController::class, 'runTriage'])->name('triage.run');
+        Route::post('/triage/{email}/mark-read', [EmailController::class, 'triageMarkRead'])->name('triage.mark-read');
         Route::get('/{email}', [EmailController::class, 'show'])->name('show');
         Route::post('/{email}/suggest-reply', [EmailController::class, 'suggestReply'])->name('suggest-reply');
         Route::delete('/{email}', [EmailController::class, 'destroy'])->name('destroy');

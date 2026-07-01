@@ -10,9 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'user_id', 'gmail_id', 'thread_id', 'subject', 'body_plain', 'body_html',
+    'summary', 'priority', 'needs_response', 'action_items',
     'from_email', 'from_name', 'to_email', 'to_name', 'cc', 'bcc',
     'label', 'is_read', 'is_starred', 'is_draft', 'has_attachments',
-    'received_at', 'sent_at',
+    'received_at', 'sent_at', 'triaged_at',
 ])]
 class Email extends Model
 {
@@ -27,8 +28,10 @@ class Email extends Model
             'is_starred' => 'boolean',
             'is_draft' => 'boolean',
             'has_attachments' => 'boolean',
+            'needs_response' => 'boolean',
             'received_at' => 'datetime',
             'sent_at' => 'datetime',
+            'triaged_at' => 'datetime',
         ];
     }
 

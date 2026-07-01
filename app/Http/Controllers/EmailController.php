@@ -6,11 +6,13 @@ use App\Models\Email;
 use App\Models\EmailReplyHistory;
 use App\Models\EmailReplyPreference;
 use App\Services\AIService;
+use App\Services\ClaudeService;
 use App\Services\GmailService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class EmailController extends Controller
@@ -176,6 +178,110 @@ class EmailController extends Controller
 
         return to_route('emails.index')
             ->with('status', "Synced {$count} emails.")
+            ->with('status_type', 'success');
+    }
+
+    public function triage(): View
+    {
+        $untriagedCount = Email::where('user_id', Auth::id())
+            ->where('label', 'INBOX')
+            ->whereNull('triaged_at')
+            ->count();
+
+        $highPriority = Email::where('user_id', Auth::id())
+            ->where('label', 'INBOX')
+            ->where('priority', 'high')
+            ->whereNull('triaged_at')
+            ->count();
+
+        $needsResponse = Email::where('user_id', Auth::id())
+            ->where('label', 'INBOX')
+            ->where('needs_response', true)
+            ->whereNull('triaged_at')
+            ->count();
+
+        $emails = Email::where('user_id', Auth::id())
+            ->where('label', 'INBOX')
+            ->orderByRaw("CASE WHEN priority IS NULL THEN 0 ELSE 1 END")
+            ->orderByRaw("CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END")
+            ->latest('received_at')
+            ->paginate(50);
+
+        return view('emails.triage', compact('emails', 'untriagedCount', 'highPriority', 'needsResponse'));
+    }
+
+    public function runTriage(ClaudeService $claude): RedirectResponse
+    {
+        $emails = Email::where('user_id', Auth::id())
+            ->where('label', 'INBOX')
+            ->whereNull('triaged_at')
+            ->where('is_read', false)
+            ->latest('received_at')
+            ->take(50)
+            ->get();
+
+        if ($emails->isEmpty()) {
+            return to_route('emails.triage')
+                ->with('status', 'No new emails to triage.')
+                ->with('status_type', 'warning');
+        }
+
+        if (!$claude->isAvailable()) {
+            return to_route('emails.triage')
+                ->with('status', 'Claude API key is not configured. Set CLAUDE_API_KEY in your .env file.')
+                ->with('status_type', 'error');
+        }
+
+        $results = $claude->triageEmails($emails);
+        $updated = 0;
+
+        foreach ($results as $result) {
+            try {
+                $result['email']->update([
+                    'summary' => $result['summary'],
+                    'priority' => $result['priority'],
+                    'needs_response' => $result['needs_response'],
+                    'action_items' => $result['action_items'],
+                    'triaged_at' => now(),
+                    'is_read' => true,
+                ]);
+
+                if ($result['email']->gmail_id) {
+                    $this->gmail->markAsRead($result['email']->gmail_id);
+                }
+
+                $updated++;
+            } catch (\Exception $e) {
+                Log::error('Failed to update triage result for email ' . $result['email']->id . ': ' . $e->getMessage());
+            }
+        }
+
+        $skipped = $emails->count() - count($results);
+
+        $message = "Triaged {$updated} emails.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} could not be processed.";
+        }
+
+        return to_route('emails.triage')
+            ->with('status', $message)
+            ->with('status_type', 'success');
+    }
+
+    public function triageMarkRead(Email $email): RedirectResponse
+    {
+        if ($email->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $email->update(['is_read' => true]);
+
+        if ($email->gmail_id) {
+            $this->gmail->markAsRead($email->gmail_id);
+        }
+
+        return to_route('emails.triage')
+            ->with('status', 'Email marked as read.')
             ->with('status_type', 'success');
     }
 
