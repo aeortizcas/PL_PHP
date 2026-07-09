@@ -1,0 +1,100 @@
+Slack API - Notas de Integración
+===================================
+Fecha: 2026-07-08
+Proyecto: PL_PHP
+
+---
+
+1. SLACK WEB API
+   URL base: https://slack.com/api/
+   Autenticación: Token vía header Authorization: Bearer xoxb-...
+
+2. PRINCIPALES ENDPOINTS
+
+   - chat.postMessage
+     POST /api/chat.postMessage
+     Body (JSON):
+     {
+       "channel": "C123456" | "#general",
+       "text": "Mensaje a enviar",
+       "mrkdwn": true
+     }
+     Scopes necesarios: chat:write, chat:write.public
+     Rate limit: ~1 msg/s por canal, ~varios cientos/minuto por workspace
+
+   - conversations.list
+     GET /api/conversations.list
+     Lista canales públicos, privados y DMs.
+
+   - users.list
+     GET /api/users.list
+     Lista usuarios del workspace.
+
+   - chat.update
+     POST /api/chat.update
+     Actualiza un mensaje existente (requiere ts y channel).
+
+   - chat.delete
+     POST /api/chat.delete
+     Elimina un mensaje (requiere ts y channel).
+
+   - reactions.add
+     POST /api/reactions.add
+     Añade un emoji reaction a un mensaje.
+
+3. TIPOS DE TOKENS
+   - Bot Token (xoxb-...): Actúa como bot, requiere scopes.
+   - User Token (xoxp-...): Actúa como usuario autenticado.
+   - App-Level Token (xapp-...): Para conexiones Socket Mode.
+
+4. SLACK CLI / SDKs
+   - JavaScript: @slack/web-api (node-slack-sdk)
+   - Python: slack-sdk
+   - PHP: slackclient (o consumir API directamente con Guzzle/Http)
+
+5. EJEMPLO EN PHP CON GUZZLE
+   use Illuminate\Support\Facades\Http;
+
+   $response = Http::withToken('xoxb-...')
+       ->post('https://slack.com/api/chat.postMessage', [
+           'channel' => '#general',
+           'text'    => 'Hola desde PL_PHP!',
+           'mrkdwn'  => true,
+       ]);
+
+   if ($response->json('ok')) {
+       // Mensaje enviado
+   }
+
+6. EVENTOS (EVENTS API)
+   - message.channels: Mensajes en canales públicos
+   - message.im: Mensajes directos
+   - reaction_added: Cuando alguien reacciona
+   - Para recibir eventos: URL pública verificada o Socket Mode
+
+7. CONSIDERACIONES
+   - Los mensajes en Slack usan mrkdwn (Markdown de Slack), no Markdown estándar.
+   - Los attachment (legacy) están deprecados; usar Block Kit para mensajes rich.
+   - El campo as_user está deprecado en la mayoría de los casos.
+   - Slack impone rate limits por app y por workspace.
+
+8. BLOCK KIT (alternativa moderna a attachments)
+   Ejemplo de bloque:
+   {
+     "blocks": [
+       {
+         "type": "section",
+         "text": {
+           "type": "mrkdwn",
+           "text": "*Hola!* Este es un mensaje con Block Kit."
+         }
+       }
+     ]
+   }
+
+---
+
+Recursos:
+- Documentación oficial: https://docs.slack.dev/
+- Block Kit Builder: https://app.slack.com/block-kit-builder
+- API methods: https://docs.slack.dev/reference/methods
